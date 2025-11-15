@@ -1,4 +1,5 @@
 <?php
+  session_start();
   include "service/database.php";
   $message = "";
   
@@ -8,10 +9,14 @@
 
     $sql = "SELECT * FROM penonton 
     WHERE email='$email' AND password='$password'";
+    if($email == 'Admin@bioskop.com' and $password == 'admin123'){
+      header('location: admin.php');
+    }
 
     $result = $db->query($sql);
   
     if($result->num_rows>0){
+      $_SESSION['isLogin'] = true;
       header("location: index.php");
     } else{
       $message = "Email atau password salah!";
