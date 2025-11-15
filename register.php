@@ -1,6 +1,7 @@
 <?php
-
   include "service/database.php";
+
+  $message = "";
 
   if(isset($_POST["confirm"])){
     $email = $_POST["email"];
