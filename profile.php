@@ -9,7 +9,7 @@ $message = '';
 $success = '';
 
 // Ambil data user saat ini
-$stmt = $db->prepare("SELECT id_penonton, email, nama, no_hp, password FROM penonton WHERE id_penonton = ? LIMIT 1");
+$stmt = $db->prepare("SELECT id_penonton, email, nama, nomor_hp, password FROM penonton WHERE id_penonton = ? LIMIT 1");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
 $current = $stmt->get_result()->fetch_assoc();
@@ -24,19 +24,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   // Ambil input (boleh kosong; kosong = pakai nilai lama)
   $inEmail = trim($_POST['email'] ?? '');
   $inNama  = trim($_POST['nama'] ?? '');
-  $inNoHp  = trim($_POST['no_hp'] ?? '');
+  $inNoHp  = trim($_POST['nomor_hp'] ?? '');
   $passNew = $_POST['password'] ?? '';
 
   // Resolve nilai final yang akan disimpan
   $newEmail = ($inEmail === '') ? $current['email'] : $inEmail;
   $newNama  = ($inNama  === '') ? ($current['nama'] ?? '') : $inNama;
-  $newNoHp  = ($inNoHp  === '') ? ($current['no_hp'] ?? '') : $inNoHp;
+  $newNoHp  = ($inNoHp  === '') ? ($current['nomor_hp'] ?? '') : $inNoHp;
 
   // Cek: ada perubahan atau tidak?
   $changed = false;
   if ($newEmail !== $current['email']) $changed = true;
   if ($newNama  !== ($current['nama'] ?? '')) $changed = true;
-  if ($newNoHp  !== ($current['no_hp'] ?? '')) $changed = true;
+  if ($newNoHp  !== ($current['nomor_hp'] ?? '')) $changed = true;
   if ($passNew !== '') $changed = true;
 
   if (!$changed) {
@@ -58,16 +58,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       // Susun UPDATE: password diubah hanya jika diisi
       if ($passNew !== '') {
         // === Versi A (password PLAIN mengikuti repo kamu) ===
-        $stmt = $db->prepare("UPDATE penonton SET email=?, nama=?, no_hp=?, password=? WHERE id_penonton=?");
+        $stmt = $db->prepare("UPDATE penonton SET email=?, nama=?, nomor_hp=?, password=? WHERE id_penonton=?");
         $stmt->bind_param("ssssi", $newEmail, $newNama, $newNoHp, $passNew, $userId);
 
         /* === Versi B (rekomendasi HASHED)
         $hash = password_hash($passNew, PASSWORD_DEFAULT);
-        $stmt = $db->prepare("UPDATE penonton SET email=?, nama=?, no_hp=?, password=? WHERE id_penonton=?");
+        $stmt = $db->prepare("UPDATE penonton SET email=?, nama=?, nomor_hp=?, password=? WHERE id_penonton=?");
         $stmt->bind_param("ssssi", $newEmail, $newNama, $newNoHp, $hash, $userId);
         === */
       } else {
-        $stmt = $db->prepare("UPDATE penonton SET email=?, nama=?, no_hp=? WHERE id_penonton=?");
+        $stmt = $db->prepare("UPDATE penonton SET email=?, nama=?, nomor_hp=? WHERE id_penonton=?");
         $stmt->bind_param("sssi", $newEmail, $newNama, $newNoHp, $userId);
       }
 
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user']['nama']  = $newNama ?: $newEmail;
 
         // Refresh $current untuk render ulang form
-        $stmt = $db->prepare("SELECT id_penonton, email, nama, no_hp, password FROM penonton WHERE id_penonton = ? LIMIT 1");
+        $stmt = $db->prepare("SELECT id_penonton, email, nama, nomor_hp, password FROM penonton WHERE id_penonton = ? LIMIT 1");
         $stmt->bind_param("i", $userId);
         $stmt->execute();
         $current = $stmt->get_result()->fetch_assoc();
@@ -140,10 +140,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="space-y-1.5">
-          <label class="text-sm font-medium" for="no_hp">Nomor HP</label>
-          <input id="no_hp" name="no_hp" type="tel" inputmode="numeric" pattern="[0-9]{8,15}" required
+          <label class="text-sm font-medium" for="nomor_hp">Nomor HP</label>
+          <input id="nomor_hp" name="nomor_hp" type="tel" inputmode="numeric" pattern="[0-9]{8,15}" required
                  placeholder="08xxxxxxxxxx"
-                 value="<?= h($current['no_hp'] ?? '') ?>"
+                 value="<?= h($current['nomor_hp'] ?? '') ?>"
                  class="w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500">
           <p class="text-xs text-gray-500">Angka saja, 8–15 digit.</p>
         </div>
