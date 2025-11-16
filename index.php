@@ -1,6 +1,7 @@
 <?php
 require __DIR__.'/auth.php';
 require __DIR__.'/service/database.php';
+require_login();
 
 function h($x){return htmlspecialchars($x,ENT_QUOTES,'UTF-8');}
 
