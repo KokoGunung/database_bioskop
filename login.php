@@ -9,8 +9,6 @@ if (isset($_POST["confirm"])) {
   $email = trim($_POST["email"] ?? "");
   $password = $_POST["password"] ?? "";
 
-  // Jika password tersimpan PLAIN di DB: bandingkan langsung.
-  // Jika sudah HASH di DB: ganti verifikasi ke password_verify().
   $stmt = $db->prepare("SELECT id_penonton, email, nama, password FROM penonton WHERE email = ? LIMIT 1");
   $stmt->bind_param("s", $email);
   $stmt->execute();
@@ -18,7 +16,6 @@ if (isset($_POST["confirm"])) {
   $user = $res->fetch_assoc();
   $stmt->close();
 
-  // PLAIN:
   if ($user && $password === $user['password']) {
     $_SESSION['user'] = [
       'id'    => (int)$user['id_penonton'],
@@ -31,19 +28,6 @@ if (isset($_POST["confirm"])) {
     $message = "Email atau password salah!";
   }
 
-  /* --- Jika SUDAH hashed:
-  if ($user && password_verify($password, $user['password'])) {
-    $_SESSION['user'] = [
-      'id'    => (int)$user['id_penonton'],
-      'email' => $user['email'],
-      'nama'  => $user['nama'] ?: $user['email'],
-    ];
-    header("Location: " . $next);
-    exit;
-  } else {
-    $message = "Email atau password salah!";
-  }
-  --- */
 }
 ?>
 <!DOCTYPE html>
@@ -57,7 +41,7 @@ if (isset($_POST["confirm"])) {
 </head>
 
 <body class="bg-gray-50 text-gray-900">
-  <?php include "layout/navbar.html"; ?>
+  <?php include "layout/navbar.php"; ?>
 
   <main class="max-w-6xl mx-auto px-4 py-10">
     <div class="mx-auto max-w-md">
