@@ -31,14 +31,15 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     $ge  = trim($_POST['genre'] ?? '');
     $du  = trim($_POST['durasi'] ?? '');   // HH:MM:SS
     $rt  = (int)($_POST['rating'] ?? 13);
+    $hg = (int)($_POST['harga'] ?? 0);
     $si  = trim($_POST['sinopsis'] ?? '');
     $mt  = trim($_POST['mulai_tayang'] ?? '');   // YYYY-MM-DD
     $stg = trim($_POST['selesai_tayang'] ?? ''); // YYYY-MM-DD
-    if ($idf===''||$ids===''||$jd===''||$du===''||$mt===''||$stg==='') { $err='Lengkapi field wajib film.'; }
+    if ($idf===''||$ids===''||$jd===''||$du===''||$mt===''||$stg===''||$hg<=0) { $err='Lengkapi field wajib film.'; }
     else {
-      $st = $db->prepare("INSERT INTO film (id_film,id_studio,judul,genre,durasi,rating,sinopsis,mulai_tayang,selesai_tayang)
-                          VALUES (?,?,?,?,?,?,?,?,?)");
-      $st->bind_param("sssssiiss", $idf,$ids,$jd,$ge,$du,$rt,$si,$mt,$stg);
+      $st = $db->prepare("INSERT INTO film (id_film,id_studio,judul,genre,durasi,rating,harga,sinopsis,mulai_tayang,selesai_tayang)
+                          VALUES (?,?,?,?,?,?,?,?,?,?)");
+      $st->bind_param("sssssiiss", $idf,$ids,$jd,$ge,$du,$rt,$hg,$si,$mt,$stg);
       $ok = $st->execute() ? 'Film ditambahkan.' : 'Gagal menambah film.';
       $st->close();
     }
@@ -133,6 +134,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div><label class="text-sm">Rating Umur</label><input name="rating" type="number" min="0" class="w-full border rounded-xl px-3 py-2" value="13"></div>
+            <div><label class="text-sm">Harga (Rupiah)</label><input name="harga" type="number" min="0" class="w-full border rounded-xl px-3 py-2" placeholder="50000" required></div>
             <div><label class="text-sm">Mulai Tayang</label><input name="mulai_tayang" type="date" class="w-full border rounded-xl px-3 py-2" required></div>
           </div>
           <div class="grid grid-cols-2 gap-3">
