@@ -37,12 +37,11 @@ $qPast = $db->query("
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-900">
-  <?php include "layout/navbar.html"; ?>
+  <?php include "layout/navbar.php"; ?>
 
   <main class="max-w-6xl mx-auto px-4 py-8">
     <header class="flex items-center justify-between mb-6">
       <h1 class="text-2xl md:text-3xl font-bold">Daftar Film</h1>
-      <div class="text-sm text-gray-600">Halo, <?= h($_SESSION['user']['nama'] ?? $_SESSION['user']['email']) ?></div>
     </header>
 
     <section class="mb-10">
@@ -117,5 +116,8 @@ $qPast = $db->query("
       <?php endif; ?>
     </section>
   </main>
+  <?php include "layout/footer.html" ?>
+
+
 </body>
 </html>
