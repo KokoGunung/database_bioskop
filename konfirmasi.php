@@ -37,8 +37,8 @@ if (count($kursiDipilih) !== $kuota) {
   exit;
 }
 
-// harga (sederhana)
-$hargaSatuan = 50000;
+$hargaSatuan = (int)($film['harga'] ?? 0);
+$total = max(1, (int)($_POST['jumlah_tiket'] ?? 1)) * $hargaSatuan;
 
 // Pastikan kursi belum dipakai user lain (race-condition sederhana)
 $in = implode(',', array_fill(0, count($kursiDipilih), '?'));
@@ -89,7 +89,7 @@ $r = $q->get_result();
 while($row=$r->fetch_assoc()){ $seats[] = $row['nomor_kursi']; }
 $q->close();
 
-$total = $kuota * $hargaSatuan;
+
 ?>
 <!doctype html>
 <html lang="id">
@@ -113,7 +113,7 @@ $total = $kuota * $hargaSatuan;
       <div class="flex justify-between"><span>Kursi</span><span><?= h(implode(', ', $seats)) ?></span></div>
       <div class="flex justify-between"><span>Jumlah</span><span><?= (int)$kuota ?> tiket</span></div>
       <div class="flex justify-between"><span>Harga Satuan</span><span>Rp <?= number_format($hargaSatuan,0,',','.') ?></span></div>
-      <div class="flex justify-between text-lg font-semibold"><span>Total</span><span>Rp <?= number_format($total,0,',','.') ?></span></div>
+      <div class="flex justify-between text-lg font-semibold"><span>Total</span><span>Rp <?= number_format($hargaSatuan * $kuota,0,',','.') ?></span></div>
     </div>
 
     <a href="pesanan_saya.php" class="inline-block mt-4 mr-2 bg-white border text-gray-700 px-4 py-2 rounded-xl">Pesanan Saya</a>
