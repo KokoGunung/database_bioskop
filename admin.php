@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     $no  = trim($_POST['nomor_kursi'] ?? '');
     if ($idk===''||$ids===''||$no==='') { $err='Lengkapi id kursi, studio, nomor kursi.'; }
     else {
-      $st = $db->prepare("INSERT INTO kursi (id_kursi, id_studio, nomor_kursi) VALUES (?,?,?)");
+      $st = $db->prepare("INSERT INTO kursi (nomor_kursi, id_studio, posisi) VALUES (?,?,?)");
       $st->bind_param("sss", $idk,$ids,$no);
       $ok = $st->execute() ? 'Kursi ditambahkan.' : 'Gagal menambah kursi.';
       $st->close();
