@@ -5,6 +5,68 @@ require_login();
 
 function h($x){ return htmlspecialchars((string)$x, ENT_QUOTES, 'UTF-8'); }
 
+$success = '';
+$error   = '';
+
+// ====== HANDLE CANCEL (POST) ======
+if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['cancel_order'])) {
+  $idPsn = trim($_POST['id_pemesanan'] ?? '');
+  if ($idPsn === '') {
+    $error = 'ID pemesanan tidak valid.';
+  } else {
+    // Pastikan pesanan milik user
+    $q = $db->prepare("SELECT id_pemesanan FROM pemesanan WHERE id_pemesanan=? AND id_penonton=? LIMIT 1");
+    $q->bind_param("si", $idPsn, $_SESSION['user']['id']);
+    $q->execute();
+    $own = $q->get_result()->fetch_assoc();
+    $q->close();
+
+    if (!$own) {
+      $error = 'Pemesanan tidak ditemukan atau bukan milik Anda.';
+    } else {
+      // Cek status pembayaran terakhir
+      $q = $db->prepare("SELECT status_bayar FROM pembayaran WHERE id_pemesanan=? ORDER BY id_pembayaran DESC LIMIT 1");
+      $q->bind_param("s", $idPsn);
+      $q->execute();
+      $pay = $q->get_result()->fetch_assoc();
+      $q->close();
+
+      if (!empty($pay) && ($pay['status_bayar'] ?? '') === 'SUKSES') {
+        $error = 'Pemesanan sudah dibayar dan tidak bisa dibatalkan.';
+      } else {
+        // Jalankan pembatalan dalam transaksi
+        try {
+          $db->begin_transaction();
+
+          // Hapus tiket (kursi akan bebas kembali)
+          $st = $db->prepare("DELETE FROM tiket WHERE id_pemesanan=?");
+          $st->bind_param("s", $idPsn);
+          $st->execute();
+          $st->close();
+
+          // Hapus pembayaran apa pun (jika ada & bukan sukses)
+          $st = $db->prepare("DELETE FROM pembayaran WHERE id_pemesanan=?");
+          $st->bind_param("s", $idPsn);
+          $st->execute();
+          $st->close();
+
+          // Hapus pemesanan
+          $st = $db->prepare("DELETE FROM pemesanan WHERE id_pemesanan=? AND id_penonton=?");
+          $st->bind_param("si", $idPsn, $_SESSION['user']['id']);
+          $st->execute();
+          $st->close();
+
+          $db->commit();
+          $success = 'Pemesanan berhasil dibatalkan dan dihapus.';
+        } catch (Throwable $e) {
+          $db->rollback();
+          $error = 'Gagal membatalkan pesanan. Silakan coba lagi.';
+        }
+      }
+    }
+  }
+}
+
 /*
   Ambil ringkasan pesanan.
   - id_jadwal diambil dari tiket pertama per pemesanan (MIN(id_jadwal)) agar tetap tampil
@@ -15,7 +77,7 @@ SELECT
   p.id_pemesanan,
   p.tanggal_pesan,
   p.jumlah_tiket,
-  j.id_jadwal,                         -- dari subquery tiket
+  j.id_jadwal,                         
   j.tanggal AS tgl_tayang,
   j.jam_mulai, j.jam_selesai,
   f.judul, s.nama_studio,
@@ -63,6 +125,16 @@ $stmt->close();
       <h1 class="text-2xl md:text-3xl font-bold">Pesanan Saya</h1>
       <p class="text-gray-600 mt-1">Riwayat pemesanan tiket milik akunmu.</p>
     </header>
+
+    <?php if ($success): ?>
+      <div class="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700" role="alert">
+        <?= h($success) ?>
+      </div>
+    <?php elseif ($error): ?>
+      <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+        <?= h($error) ?>
+      </div>
+    <?php endif; ?>
 
     <?php if (empty($items)): ?>
       <div class="rounded-2xl border bg-white p-6 text-gray-600">Belum ada pemesanan.</div>
@@ -128,7 +200,7 @@ $stmt->close();
                   <?php if ($sudahAdaTiket): ?>
                     <span class="text-red-600">Belum dibayar</span>
                   <?php else: ?>
-                    <span class="text-amber-600">Belum pilih kursi — selesaikan pemilihan kursi untuk dapat membayar</span>
+                    <span class="text-amber-600">Belum pilih kursi — batalkan dan ulangi pesanan</span>
                   <?php endif; ?>
                 <?php endif; ?>
               </div>
@@ -137,26 +209,25 @@ $stmt->close();
               </div>
             </div>
 
-            <?php if (!$sudahBayarSukses): ?>
-              <?php if ($sudahAdaTiket): ?>
-                <a href="pembayaran.php?id_pemesanan=<?= h($it['id_pemesanan']) ?>"
-                   class="inline-block mt-3 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm">
-                  Bayar Sekarang
-                </a>
-              <?php else: ?>
-                <?php if (!empty($it['id_jadwal'])): ?>
-                  <a href="pilih_kursi.php?id_pemesanan=<?= h($it['id_pemesanan']) ?>&id_jadwal=<?= h($it['id_jadwal']) ?>"
-                     class="inline-block mt-3 bg-white border text-gray-700 px-3 py-1.5 rounded-lg text-sm">
-                    Pilih Kursi Sekarang
-                  </a>
-                <?php else: ?>
-                  <a href="index.php"
-                     class="inline-block mt-3 bg-white border text-gray-700 px-3 py-1.5 rounded-lg text-sm">
-                    Pilih Kursi Sekarang
+            <div class="mt-3 flex items-center gap-2">
+              <?php if (!$sudahBayarSukses): ?>
+                <?php if ($sudahAdaTiket): ?>
+                  <a href="pembayaran.php?id_pemesanan=<?= h($it['id_pemesanan']) ?>"
+                     class="inline-block bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm">
+                    Bayar Sekarang
                   </a>
                 <?php endif; ?>
+
+                <!-- Tombol Batalkan Pesanan (hanya jika belum SUKSES) -->
+                <form action="pesanan_saya.php" method="post" onsubmit="return confirm('Yakin batalkan pesanan ini?');">
+                  <input type="hidden" name="id_pemesanan" value="<?= h($it['id_pemesanan']) ?>">
+                  <button name="cancel_order" type="submit"
+                          class="inline-flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm">
+                    Batalkan Pesanan
+                  </button>
+                </form>
               <?php endif; ?>
-            <?php endif; ?>
+            </div>
           </article>
         <?php endforeach; ?>
       </div>
