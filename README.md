@@ -12,7 +12,7 @@
     ```
 4. **Masuk ke localhost**
     Buka browser tempel link ini 
-        ```bash
+        ```
         localhost/database_bioskop/
         ```
 
