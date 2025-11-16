@@ -14,6 +14,9 @@ if ($idFilm) {
   $stmt->bind_param("s", $idFilm);
   $stmt->execute();
   $film = $stmt->get_result()->fetch_assoc();
+  $hargaSatuan = (int)($film['harga'] ?? 0);
+  $qty         = max(1, (int)($_POST['jumlah_tiket'] ?? 1));
+  $total       = $hargaSatuan * $qty;
   $stmt->close();
 }
 
@@ -24,37 +27,48 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['buat_pesan'])) {
   $idFilm = $_POST['id_film'] ?? '';
   $idJad  = $_POST['id_jadwal'] ?? '';
   $qty    = max(1, (int)($_POST['jumlah_tiket'] ?? 1));
-  $userId = (int)$_SESSION['user']['id'];
 
-  if (!$idFilm || !$idJad) {
+  $userId = (int)($_SESSION['user']['id'] ?? 0);
+
+  if (!$userId) {
+    $error = "Silakan login terlebih dahulu.";
+  } elseif (!$idFilm || !$idJad) {
     $error = "Pilih jadwal terlebih dahulu.";
   } else {
-    $idPsn = 'PM'.substr(time().mt_rand(100,999), -8);
+    // RE-LOAD FILM SAAT POST → agar harga tidak 0
+    $stmtFilm = $db->prepare("SELECT id_film, id_studio, judul, harga FROM film WHERE id_film = ? LIMIT 1");
+    $stmtFilm->bind_param("s", $idFilm);
+    $stmtFilm->execute();
+    $filmRow = $stmtFilm->get_result()->fetch_assoc();
+    $stmtFilm->close();
 
-    $stmt = $db->prepare("INSERT INTO pemesanan (id_pemesanan, id_penonton, tanggal_pesan, jumlah_tiket)
-                          VALUES (?, ?, NOW(), ?)");
-    $stmt->bind_param("sii", $idPsn, $userId, $qty);
-
-    // === pada saat submit di order.php ===
-    if ($stmt->execute()) {
-      $stmt->close();
-
-      // ambil info tambahan untuk next step
-      // kita butuh studio dari film & id_jadwal terpilih
-      // pastikan form order mengirim id_jadwal (sudah ada pada kode kamu di radio button)
-      $idJad = $_POST['id_jadwal'] ?? '';
-      $idStudio = $film['id_studio']; // karena $film sudah di-select di awal halaman
-
-      // redirect ke pilih_kursi.php dengan parameter penting
-      header("Location: pilih_kursi.php?id_pemesanan={$idPsn}&id_jadwal={$idJad}&id_studio={$idStudio}");
-      exit;
+    if (!$filmRow) {
+      $error = "Film tidak ditemukan.";
     } else {
-      $error = "Gagal menyimpan pemesanan.";
-      $stmt->close();
-    }
+      $hargaSatuan = (int)($filmRow['harga'] ?? 0);
+      $total       = $hargaSatuan * $qty;
 
+      // buat pemesanan
+      $idPsn = 'PM'.substr(time().mt_rand(100,999), -8);
+      $stmt = $db->prepare("INSERT INTO pemesanan (id_pemesanan, id_penonton, tanggal_pesan, jumlah_tiket)
+                            VALUES (?, ?, NOW(), ?)");
+      $stmt->bind_param("sii", $idPsn, $userId, $qty);
+
+      if ($stmt->execute()) {
+        $stmt->close();
+
+        // redirect ke pilih kursi (jika skrip kamu masih pakai id_studio, kirimkan; kalau tidak perlu, hapus saja)
+        $idStudio = $filmRow['id_studio'];
+        header("Location: pilih_kursi.php?id_pemesanan={$idPsn}&id_jadwal={$idJad}&id_studio={$idStudio}");
+        exit;
+      } else {
+        $error = "Gagal menyimpan pemesanan.";
+        $stmt->close();
+      }
+    }
   }
 }
+
 
 $jadwal = [];
 if ($idFilm) {
@@ -147,6 +161,9 @@ if ($idFilm) {
             <div class="space-y-2 text-sm">
               <div class="flex justify-between"><span>Film</span><span class="font-medium"><?= h($film['judul']) ?></span></div>
               <div class="flex justify-between"><span>Studio</span><span><?= h($film['nama_studio'] ?? $film['id_studio']) ?></span></div>
+              <div class="flex justify-between"><span>Harga Satuan</span><span>Rp <?= number_format($hargaSatuan,0,',','.') ?></span></div>
+              <div class="flex justify-between text-base font-semibold"><span>Total</span><span>Rp <?= number_format($total,0,',','.') ?></span></div>
+
               <div class="text-xs text-gray-500">Pilih jadwal dan jumlah tiket, lalu klik “Buat Pemesanan”.</div>
             </div>
           </div>
