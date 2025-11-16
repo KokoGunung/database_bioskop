@@ -1,8 +1,7 @@
 <?php
   session_start();
   include "service/database.php";
-  $message = "";
-  
+
   if(isset($_POST["confirm"])){
     $email = $_POST["email"];
     $password = $_POST["password"];
