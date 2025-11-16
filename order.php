@@ -35,12 +35,24 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['buat_pesan'])) {
                           VALUES (?, ?, NOW(), ?)");
     $stmt->bind_param("sii", $idPsn, $userId, $qty);
 
+    // === pada saat submit di order.php ===
     if ($stmt->execute()) {
-      $success = "Pemesanan dibuat dengan ID: ".$idPsn;
+      $stmt->close();
+
+      // ambil info tambahan untuk next step
+      // kita butuh studio dari film & id_jadwal terpilih
+      // pastikan form order mengirim id_jadwal (sudah ada pada kode kamu di radio button)
+      $idJad = $_POST['id_jadwal'] ?? '';
+      $idStudio = $film['id_studio']; // karena $film sudah di-select di awal halaman
+
+      // redirect ke pilih_kursi.php dengan parameter penting
+      header("Location: pilih_kursi.php?id_pemesanan={$idPsn}&id_jadwal={$idJad}&id_studio={$idStudio}");
+      exit;
     } else {
       $error = "Gagal menyimpan pemesanan.";
+      $stmt->close();
     }
-    $stmt->close();
+
   }
 }
 
