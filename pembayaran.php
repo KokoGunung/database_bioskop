@@ -35,8 +35,9 @@ $detail->close();
 $sum = $db->prepare("SELECT COALESCE(SUM(harga),0) AS total FROM tiket WHERE id_pemesanan=?");
 $sum->bind_param("s", $idPemesanan);
 $sum->execute();
-$total = ($sum->get_result()->fetch_assoc()['total'] ?? 0);
+$total = (int)($sum->get_result()->fetch_assoc()['total'] ?? 0);
 $sum->close();
+
 
 $ok = ''; $err = '';
 if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['bayar'])) {
