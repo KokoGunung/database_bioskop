@@ -1,31 +1,51 @@
 <?php
-  session_start();
-  include "service/database.php";
+include "service/database.php";
+session_start();
 
-  if(isset($_POST["confirm"])){
-    $email = $_POST["email"];
-    $password = $_POST["password"];
+$message = "";
+$next = $_GET['next'] ?? $_POST['next'] ?? 'index.php';
 
-    $sql = "SELECT * FROM penonton 
-    WHERE email='$email' AND password='$password'";
-    if($email == 'Admin@bioskop.com' and $password == 'admin123'){
-      header('location: admin.php');
-    }
+if (isset($_POST["confirm"])) {
+  $email = trim($_POST["email"] ?? "");
+  $password = $_POST["password"] ?? "";
 
-    $result = $db->query($sql);
-  
-    if($result->num_rows>0){
-      $_SESSION['isLogin'] = true;
-      header("location: index.php");
-    } else{
-      $message = "Email atau password salah!";
-    }
+  // Jika password tersimpan PLAIN di DB: bandingkan langsung.
+  // Jika sudah HASH di DB: ganti verifikasi ke password_verify().
+  $stmt = $db->prepare("SELECT id_penonton, email, nama, password FROM penonton WHERE email = ? LIMIT 1");
+  $stmt->bind_param("s", $email);
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $user = $res->fetch_assoc();
+  $stmt->close();
+
+  // PLAIN:
+  if ($user && $password === $user['password']) {
+    $_SESSION['user'] = [
+      'id'    => (int)$user['id_penonton'],
+      'email' => $user['email'],
+      'nama'  => $user['nama'] ?: $user['email'],
+    ];
+    header("Location: " . $next);
+    exit;
+  } else {
+    $message = "Email atau password salah!";
   }
 
-
+  /* --- Jika SUDAH hashed:
+  if ($user && password_verify($password, $user['password'])) {
+    $_SESSION['user'] = [
+      'id'    => (int)$user['id_penonton'],
+      'email' => $user['email'],
+      'nama'  => $user['nama'] ?: $user['email'],
+    ];
+    header("Location: " . $next);
+    exit;
+  } else {
+    $message = "Email atau password salah!";
+  }
+  --- */
+}
 ?>
-
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -37,9 +57,7 @@
 </head>
 
 <body class="bg-gray-50 text-gray-900">
-  <!-- NAVBAR SECTION -->
-  <?php include "layout/navbar.html" ?>
-  <!-- END OF NAVBAR SECTION -->
+  <?php include "layout/navbar.html"; ?>
 
   <main class="max-w-6xl mx-auto px-4 py-10">
     <div class="mx-auto max-w-md">
@@ -49,20 +67,24 @@
       </div>
 
       <div class="rounded-2xl border bg-white shadow-sm p-6">
+        <?php if (!empty($message)): ?>
+          <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+            <?= htmlspecialchars($message) ?>
+          </div>
+        <?php endif; ?>
+
         <form action="login.php" method="POST" class="space-y-4">
+          <input type="hidden" name="next" value="<?= htmlspecialchars($next) ?>">
           <div class="space-y-1.5">
             <label for="email" class="text-sm font-medium">Email</label>
-            <input name="email" type="email" required
+            <input name="email" id="email" type="email" required
               class="w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
-
           <div class="space-y-1.5">
             <label for="password" class="text-sm font-medium">Password</label>
-            <input name="password" type="password" required minlength="6"
+            <input name="password" id="password" type="password" required minlength="6"
               class="w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
-          <p class="mb-3 text-sm text-red-600" role="alert"> <?= $message ?></p>
-
           <button name="confirm" type="submit"
             class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2.5 rounded-xl">
             Masuk
