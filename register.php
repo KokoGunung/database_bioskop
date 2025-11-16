@@ -1,6 +1,7 @@
 <?php
 
   include "service/database.php";
+  $message = "";
 
   if(isset($_POST["confirm"])){
     $email = $_POST["email"];
@@ -34,7 +35,7 @@
 
 <body class="bg-gray-50 text-gray-900">
   <!-- NAVBAR SECTION -->
-  <?php include "layout/navbar.html" ?>
+  <?php include "layout/navbar.php" ?>
   <!-- END OF NAVBAR SECTION -->
 
   <main class="max-w-6xl mx-auto px-4 py-10">
