@@ -24,26 +24,43 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     }
   }
 
-  if (isset($_POST['add_film'])) {
-    $idf = trim($_POST['id_film'] ?? '');
-    $ids = trim($_POST['id_studio_ref'] ?? '');
-    $jd  = trim($_POST['judul'] ?? '');
-    $ge  = trim($_POST['genre'] ?? '');
-    $du  = trim($_POST['durasi'] ?? '');   // HH:MM:SS
-    $rt  = (int)($_POST['rating'] ?? 13);
-    $hg = (int)($_POST['harga'] ?? 0);
-    $si  = trim($_POST['sinopsis'] ?? '');
-    $mt  = trim($_POST['mulai_tayang'] ?? '');   // YYYY-MM-DD
-    $stg = trim($_POST['selesai_tayang'] ?? ''); // YYYY-MM-DD
-    if ($idf===''||$ids===''||$jd===''||$du===''||$mt===''||$stg===''||$hg<=0) { $err='Lengkapi field wajib film.'; }
-    else {
-      $st = $db->prepare("INSERT INTO film (id_film,id_studio,judul,genre,durasi,rating,harga,sinopsis,mulai_tayang,selesai_tayang)
-                          VALUES (?,?,?,?,?,?,?,?,?,?)");
-      $st->bind_param("sssssiiss", $idf,$ids,$jd,$ge,$du,$rt,$hg,$si,$mt,$stg);
-      $ok = $st->execute() ? 'Film ditambahkan.' : 'Gagal menambah film.';
-      $st->close();
+  // === Tambah Film ===
+if (isset($_POST['add_film'])) {
+  $idf = trim($_POST['id_film'] ?? '');
+  $ids = trim($_POST['id_studio_ref'] ?? '');
+  $jd  = trim($_POST['judul'] ?? '');
+  $ge  = trim($_POST['genre'] ?? '');
+  $du  = trim($_POST['durasi'] ?? '');       // HH:MM:SS
+  $rt  = (int)($_POST['rating'] ?? 0);       // INT
+  $hg  = (int)($_POST['harga'] ?? 0);        // INT
+  $si  = trim($_POST['sinopsis'] ?? '');
+  $mt  = trim($_POST['mulai_tayang'] ?? ''); // YYYY-MM-DD
+  $stg = trim($_POST['selesai_tayang'] ?? '');// YYYY-MM-DD
+
+  if ($idf===''||$ids===''||$jd===''||$du===''||$mt===''||$stg===''||$hg<=0) {
+    $err = 'Lengkapi field wajib film (termasuk harga).';
+  } else {
+    $sql = "INSERT INTO film
+            (id_film,id_studio,judul,genre,durasi,rating,harga,sinopsis,mulai_tayang,selesai_tayang)
+            VALUES (?,?,?,?,?,?,?,?,?,?)";
+    $st = $db->prepare($sql);
+
+    // 5 string + 2 int + 3 string = 'sssssiisss'
+    $st->bind_param('sssssiisss',
+      $idf, $ids, $jd, $ge, $du,  // sssss
+      $rt, $hg,                   // ii
+      $si, $mt, $stg              // sss
+    );
+
+    if ($st->execute()) {
+      $ok = 'Film ditambahkan.';
+    } else {
+      $err = 'Gagal menambah film.';
     }
+    $st->close();
   }
+}
+
 
   if (isset($_POST['add_jadwal'])) {
     $idj = trim($_POST['id_jadwal'] ?? '');
