@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 16, 2025 at 01:43 PM
+-- Generation Time: Nov 16, 2025 at 04:40 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -26,9 +26,6 @@ SET time_zone = "+00:00";
 --
 -- Table structure for table `film`
 --
--- Creation: Nov 14, 2025 at 06:15 AM
--- Last update: Nov 16, 2025 at 12:33 PM
---
 
 CREATE TABLE `film` (
   `id_film` varchar(10) NOT NULL,
@@ -38,32 +35,27 @@ CREATE TABLE `film` (
   `durasi` time DEFAULT NULL,
   `rating` int(11) DEFAULT NULL,
   `sinopsis` text DEFAULT NULL,
+  `harga` int(11) NOT NULL,
   `mulai_tayang` date DEFAULT NULL,
   `selesai_tayang` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- RELATIONSHIPS FOR TABLE `film`:
---
-
---
 -- Dumping data for table `film`
 --
 
-INSERT INTO `film` (`id_film`, `id_studio`, `judul`, `genre`, `durasi`, `rating`, `sinopsis`, `mulai_tayang`, `selesai_tayang`) VALUES
-('FA001', 'ST03', 'THE RUNNING MAN', 'Aksi', '02:13:00', 17, '0', '2025-11-18', '2025-11-25'),
-('FA002', 'ST03', 'PREDATOR: BADLANDS', 'Aksi', '01:47:00', 13, '0', '2025-11-01', '2025-11-08'),
-('FD001', 'ST01', 'SAMPAI TITIK TERAKHIRMU', 'Drama', '01:54:00', 13, '0', '2025-11-16', '2025-11-23'),
-('FF001', 'ST02', 'WICKED: FOR GOOD', 'Fantasi', '02:17:00', 13, '0', '2025-11-16', '2025-11-23'),
-('FH001', 'ST02', 'KUNCEN', 'Horror', '01:48:00', 13, '0', '2025-11-16', '2025-11-23'),
-('FT001', 'ST01', 'NOW YOU SEE ME: NOW YOU DONT', 'Thriller', '01:52:00', 13, '0', '2025-11-15', '2025-11-22');
+INSERT INTO `film` (`id_film`, `id_studio`, `judul`, `genre`, `durasi`, `rating`, `sinopsis`, `harga`, `mulai_tayang`, `selesai_tayang`) VALUES
+('FA001', 'ST03', 'THE RUNNING MAN', 'Aksi', '02:13:00', 17, '0', 65000, '2025-11-18', '2025-11-25'),
+('FA002', 'ST03', 'PREDATOR: BADLANDS', 'Aksi', '01:47:00', 13, '0', 70000, '2025-11-01', '2025-11-08'),
+('FD001', 'ST01', 'SAMPAI TITIK TERAKHIRMU', 'Drama', '01:54:00', 13, '0', 55000, '2025-11-16', '2025-11-23'),
+('FF001', 'ST02', 'WICKED: FOR GOOD', 'Fantasi', '02:17:00', 13, '0', 40000, '2025-11-16', '2025-11-23'),
+('FH001', 'ST02', 'KUNCEN', 'Horror', '01:48:00', 13, '0', 45000, '2025-11-16', '2025-11-23'),
+('FT001', 'ST01', 'NOW YOU SEE ME: NOW YOU DONT', 'Thriller', '01:52:00', 13, '0', 50000, '2025-11-15', '2025-11-22');
 
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `jadwal_tayang`
---
--- Creation: Nov 14, 2025 at 06:15 AM
 --
 
 CREATE TABLE `jadwal_tayang` (
@@ -73,12 +65,6 @@ CREATE TABLE `jadwal_tayang` (
   `jam_selesai` time DEFAULT NULL,
   `tanggal` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- RELATIONSHIPS FOR TABLE `jadwal_tayang`:
---   `id_film`
---       `film` -> `id_film`
---
 
 --
 -- Dumping data for table `jadwal_tayang`
@@ -92,8 +78,6 @@ INSERT INTO `jadwal_tayang` (`id_jadwal`, `id_film`, `jam_mulai`, `jam_selesai`,
 --
 -- Table structure for table `kursi`
 --
--- Creation: Nov 16, 2025 at 09:20 AM
---
 
 CREATE TABLE `kursi` (
   `nomor_kursi` varchar(10) NOT NULL,
@@ -101,12 +85,6 @@ CREATE TABLE `kursi` (
   `posisi` varchar(3) DEFAULT NULL,
   `status` enum('TERSEDIA','RUSAK') DEFAULT 'TERSEDIA'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- RELATIONSHIPS FOR TABLE `kursi`:
---   `id_studio`
---       `studio` -> `id_studio`
---
 
 --
 -- Dumping data for table `kursi`
@@ -186,8 +164,6 @@ INSERT INTO `kursi` (`nomor_kursi`, `id_studio`, `posisi`, `status`) VALUES
 --
 -- Table structure for table `pembayaran`
 --
--- Creation: Nov 16, 2025 at 12:42 PM
---
 
 CREATE TABLE `pembayaran` (
   `id_pembayaran` varchar(8) NOT NULL,
@@ -198,18 +174,18 @@ CREATE TABLE `pembayaran` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- RELATIONSHIPS FOR TABLE `pembayaran`:
---   `id_pemesanan`
---       `pemesanan` -> `id_pemesanan`
+-- Dumping data for table `pembayaran`
 --
+
+INSERT INTO `pembayaran` (`id_pembayaran`, `id_pemesanan`, `metode_bayar`, `total_bayar`, `status_bayar`) VALUES
+('PB636647', 'PM96449123', 'QRIS', 200000, 'SUKSES'),
+('PB820561', 'PM04911680', 'Bank Transfer', 50000, 'SUKSES'),
+('PB956823', 'PM06910258', 'Shopee-Pay', 100000, 'SUKSES');
 
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `pemesanan`
---
--- Creation: Nov 14, 2025 at 06:15 AM
--- Last update: Nov 16, 2025 at 12:34 PM
 --
 
 CREATE TABLE `pemesanan` (
@@ -220,25 +196,18 @@ CREATE TABLE `pemesanan` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- RELATIONSHIPS FOR TABLE `pemesanan`:
---   `id_penonton`
---       `penonton` -> `id_penonton`
---
-
---
 -- Dumping data for table `pemesanan`
 --
 
 INSERT INTO `pemesanan` (`id_pemesanan`, `id_penonton`, `tanggal_pesan`, `jumlah_tiket`) VALUES
+('PM04911680', 1, '2025-11-16 21:55:11', 1),
+('PM06910258', 1, '2025-11-16 22:28:30', 2),
 ('PM96449123', 1, '2025-11-16 19:34:09', 4);
 
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `penonton`
---
--- Creation: Nov 16, 2025 at 07:32 AM
--- Last update: Nov 16, 2025 at 07:51 AM
 --
 
 CREATE TABLE `penonton` (
@@ -249,10 +218,6 @@ CREATE TABLE `penonton` (
   `nama` varchar(50) DEFAULT NULL,
   `nomor_hp` varchar(15) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- RELATIONSHIPS FOR TABLE `penonton`:
---
 
 --
 -- Dumping data for table `penonton`
@@ -268,19 +233,12 @@ INSERT INTO `penonton` (`id_penonton`, `tanggal_daftar`, `email`, `password`, `n
 --
 -- Table structure for table `studio`
 --
--- Creation: Nov 16, 2025 at 08:47 AM
--- Last update: Nov 16, 2025 at 10:32 AM
---
 
 CREATE TABLE `studio` (
   `id_studio` varchar(10) NOT NULL,
   `nama_studio` varchar(50) DEFAULT NULL,
   `kapasitas` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- RELATIONSHIPS FOR TABLE `studio`:
---
 
 --
 -- Dumping data for table `studio`
@@ -296,9 +254,6 @@ INSERT INTO `studio` (`id_studio`, `nama_studio`, `kapasitas`) VALUES
 --
 -- Table structure for table `tiket`
 --
--- Creation: Nov 16, 2025 at 08:48 AM
--- Last update: Nov 16, 2025 at 12:34 PM
---
 
 CREATE TABLE `tiket` (
   `id_tiket` varchar(10) NOT NULL,
@@ -309,22 +264,17 @@ CREATE TABLE `tiket` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- RELATIONSHIPS FOR TABLE `tiket`:
---   `id_jadwal`
---       `jadwal_tayang` -> `id_jadwal`
---   `id_pemesanan`
---       `pemesanan` -> `id_pemesanan`
---
-
---
 -- Dumping data for table `tiket`
 --
 
 INSERT INTO `tiket` (`id_tiket`, `nomor_kursi`, `id_pemesanan`, `id_jadwal`, `harga`) VALUES
+('TK15B0AA75', 'K001', 'PM06910258', 'JFT1001', 50000),
+('TK6919e5d3', 'K009', 'PM04911680', 'JFT1001', 50000),
 ('TK96470198', 'K004', 'PM96449123', 'JFT1001', 50000),
 ('TK96470749', 'K005', 'PM96449123', 'JFT1001', 50000),
 ('TK96470767', 'K007', 'PM96449123', 'JFT1001', 50000),
-('TK96470921', 'K006', 'PM96449123', 'JFT1001', 50000);
+('TK96470921', 'K006', 'PM96449123', 'JFT1001', 50000),
+('TK9D16D395', 'K002', 'PM06910258', 'JFT1001', 50000);
 
 --
 -- Indexes for dumped tables
