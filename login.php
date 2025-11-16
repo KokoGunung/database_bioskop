@@ -9,6 +9,19 @@ if (isset($_POST["confirm"])) {
   $email = trim($_POST["email"] ?? "");
   $password = $_POST["password"] ?? "";
 
+  // ===== Admin hard-coded login (spesifikasi tugas) =====
+  if ($email === 'Admin' && $password === 'admin123') {
+    $_SESSION['user'] = [
+      'id'    => 0,
+      'email' => 'Admin',
+      'nama'  => 'Administrator'
+    ];
+    $_SESSION['role'] = 'admin';
+    header("Location: admin.php"); // arahkan ke dashboard admin
+    exit;
+  }
+  // ===== End admin block =====
+
   $stmt = $db->prepare("SELECT id_penonton, email, nama, password FROM penonton WHERE email = ? LIMIT 1");
   $stmt->bind_param("s", $email);
   $stmt->execute();
@@ -61,7 +74,7 @@ if (isset($_POST["confirm"])) {
           <input type="hidden" name="next" value="<?= htmlspecialchars($next) ?>">
           <div class="space-y-1.5">
             <label for="email" class="text-sm font-medium">Email</label>
-            <input name="email" id="email" type="email" required
+            <input name="email" id="email" type="username" required
               class="w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
           <div class="space-y-1.5">
