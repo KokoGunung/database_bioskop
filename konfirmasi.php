@@ -5,24 +5,43 @@ require_login();
 
 function h($x){ return htmlspecialchars((string)$x, ENT_QUOTES, 'UTF-8'); }
 
+// Generator ID tiket yang aman (cek ke DB agar tidak tabrakan)
+function genTicketId(mysqli $db): string {
+  // 14 chars: "TK" + 12 hex (6 bytes)
+  while (true) {
+    $id = 'TK' . strtoupper(bin2hex(random_bytes(6)));
+    $chk = $db->prepare("SELECT 1 FROM tiket WHERE id_tiket=? LIMIT 1");
+    $chk->bind_param("s", $id);
+    $chk->execute();
+    $exists = $chk->get_result()->num_rows > 0;
+    $chk->close();
+    if (!$exists) return $id;
+  }
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header("Location: index.php"); exit; }
 
-$idPemesanan = $_POST['id_pemesanan'] ?? '';
-$idJadwal    = $_POST['id_jadwal'] ?? '';
-$kursiDipilih= $_POST['nomor_kursi'] ?? [];
+$idPemesanan  = $_POST['id_pemesanan'] ?? '';
+$idJadwal     = $_POST['id_jadwal'] ?? '';
+$kursiDipilih = $_POST['nomor_kursi'] ?? [];
 
 if ($idPemesanan==='' || $idJadwal==='' || empty($kursiDipilih)) {
   header("Location: index.php");
   exit;
 }
 
-// ambil pemesanan milik user
-$stmt = $db->prepare("SELECT p.*, j.id_film, j.tanggal, j.jam_mulai, j.jam_selesai, f.judul, s.nama_studio, f.id_studio
+// Ambil data pemesanan milik user + detail jadwal/film (TERMASUK harga)
+$stmt = $db->prepare("
+  SELECT p.id_pemesanan, p.jumlah_tiket, p.id_penonton,
+         j.id_jadwal, j.tanggal, j.jam_mulai, j.jam_selesai,
+         f.judul, f.harga, s.nama_studio, f.id_studio
   FROM pemesanan p
   JOIN jadwal_tayang j ON j.id_jadwal = ?
   JOIN film f ON f.id_film = j.id_film
   JOIN studio s ON s.id_studio = f.id_studio
-  WHERE p.id_pemesanan=? AND p.id_penonton=? LIMIT 1");
+  WHERE p.id_pemesanan = ? AND p.id_penonton = ?
+  LIMIT 1
+");
 $stmt->bind_param("ssi", $idJadwal, $idPemesanan, $_SESSION['user']['id']);
 $stmt->execute();
 $data = $stmt->get_result()->fetch_assoc();
@@ -30,66 +49,65 @@ $stmt->close();
 
 if (!$data) { header("Location: index.php"); exit; }
 
-$kuota = (int)$data['jumlah_tiket'];
+$kuota       = (int)$data['jumlah_tiket'];
+$hargaSatuan = (int)($data['harga'] ?? 0);
+
+// Fallback bila harga film 0/null
+if ($hargaSatuan <= 0) {
+  $q = $db->prepare("
+    SELECT f.harga
+    FROM jadwal_tayang j
+    JOIN film f ON f.id_film = j.id_film
+    WHERE j.id_jadwal = ?
+    LIMIT 1
+  ");
+  $q->bind_param("s", $idJadwal);
+  $q->execute();
+  $extra = $q->get_result()->fetch_assoc();
+  $q->close();
+  $hargaSatuan = (int)($extra['harga'] ?? 0);
+}
+
+// Validasi jumlah kursi = kuota
 if (count($kursiDipilih) !== $kuota) {
-  // harus sesuai jumlah
   header("Location: pilih_kursi.php?id_pemesanan={$idPemesanan}&id_jadwal={$idJadwal}&id_studio={$data['id_studio']}");
   exit;
 }
 
-$hargaSatuan = (int)($film['harga'] ?? 0);
-$total = max(1, (int)($_POST['jumlah_tiket'] ?? 1)) * $hargaSatuan;
-
-// Pastikan kursi belum dipakai user lain (race-condition sederhana)
-$in = implode(',', array_fill(0, count($kursiDipilih), '?'));
-$types = str_repeat('s', count($kursiDipilih));
-
-$sqlCek = "SELECT nomor_kursi FROM tiket WHERE id_jadwal=? AND nomor_kursi IN ($in)";
+// Pastikan kursi belum dipakai di jadwal ini
+$placeholders = implode(',', array_fill(0, count($kursiDipilih), '?'));
+$typesIn = str_repeat('s', count($kursiDipilih));
+$sqlCek = "SELECT nomor_kursi FROM tiket WHERE id_jadwal=? AND nomor_kursi IN ($placeholders)";
 $cek = $db->prepare($sqlCek);
-$bindParams = [$idJadwal];
-foreach($kursiDipilih as $k){ $bindParams[] = $k; }
-
-// bind dinamis
-$ref = [];
-$ref[] = & $sqlType;
-$sqlType = 's' . $types;
-foreach ($bindParams as $i => $v) { $ref[] = & $bindParams[$i]; }
-call_user_func_array([$cek, 'bind_param'], $ref);
-
+$typesFull = 's' . $typesIn;
+$params = [$typesFull, $idJadwal];
+foreach ($kursiDipilih as $k) { $params[] = $k; }
+$refs = [];
+foreach ($params as $i => $v) { $refs[$i] = &$params[$i]; }
+call_user_func_array([$cek, 'bind_param'], $refs);
 $cek->execute();
 $used = $cek->get_result()->fetch_all(MYSQLI_ASSOC);
 $cek->close();
 
 if (!empty($used)) {
-  // ada kursi yang keburu diambil
   header("Location: pilih_kursi.php?id_pemesanan={$idPemesanan}&id_jadwal={$idJadwal}&id_studio={$data['id_studio']}");
   exit;
 }
 
-// simpan tiket
-$ins = $db->prepare("INSERT INTO tiket (id_tiket, id_pemesanan, id_jadwal, nomor_kursi, harga) VALUES (?,?,?,?,?)");
-foreach($kursiDipilih as $k){
-  $idTiket = 'TK'.substr(time().mt_rand(100,999), -8);
-  $ins->bind_param("ssssi", $idTiket, $idPemesanan, $idJadwal, $k, $hargaSatuan);
+// Simpan tiket (ID unik + harga dari film)
+$ins = $db->prepare("
+  INSERT INTO tiket (id_tiket, nomor_kursi, id_pemesanan, id_jadwal, harga)
+  VALUES (?,?,?,?,?)
+");
+foreach ($kursiDipilih as $nomor) {
+  $idTiket = genTicketId($db);
+  $ins->bind_param("ssssi", $idTiket, $nomor, $idPemesanan, $idJadwal, $hargaSatuan);
   $ins->execute();
 }
 $ins->close();
 
-// ambil kursi final untuk display
-$seats = [];
-$in = implode(',', array_fill(0, count($kursiDipilih), '?'));
-$types = str_repeat('s', count($kursiDipilih));
-$q = $db->prepare("SELECT nomor_kursi FROM kursi WHERE nomor_kursi IN ($in) ORDER BY nomor_kursi");
-$ref = [];
-$ref[] = & $types;
-foreach ($kursiDipilih as $i => $v) { $ref[] = & $kursiDipilih[$i]; }
-call_user_func_array([$q, 'bind_param'], $ref);
-$q->execute();
-$r = $q->get_result();
-while($row=$r->fetch_assoc()){ $seats[] = $row['nomor_kursi']; }
-$q->close();
-
-
+$seats = $kursiDipilih;
+$total = $hargaSatuan * $kuota;
 ?>
 <!doctype html>
 <html lang="id">
@@ -113,13 +131,12 @@ $q->close();
       <div class="flex justify-between"><span>Kursi</span><span><?= h(implode(', ', $seats)) ?></span></div>
       <div class="flex justify-between"><span>Jumlah</span><span><?= (int)$kuota ?> tiket</span></div>
       <div class="flex justify-between"><span>Harga Satuan</span><span>Rp <?= number_format($hargaSatuan,0,',','.') ?></span></div>
-      <div class="flex justify-between text-lg font-semibold"><span>Total</span><span>Rp <?= number_format($hargaSatuan * $kuota,0,',','.') ?></span></div>
+      <div class="flex justify-between text-lg font-semibold"><span>Total</span><span>Rp <?= number_format($total,0,',','.') ?></span></div>
     </div>
 
     <a href="pesanan_saya.php" class="inline-block mt-4 mr-2 bg-white border text-gray-700 px-4 py-2 rounded-xl">Pesanan Saya</a>
     <a href="pembayaran.php?id_pemesanan=<?= h($idPemesanan) ?>" class="inline-block mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl">Bayar Sekarang</a>
     <a href="index.php" class="inline-block mt-4 ml-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl">Selesai</a>
-
   </main>
 </body>
 </html>
