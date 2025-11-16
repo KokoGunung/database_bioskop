@@ -18,7 +18,11 @@ SELECT
   f.judul,
   s.nama_studio,
   COALESCE(GROUP_CONCAT(t.nomor_kursi ORDER BY t.nomor_kursi SEPARATOR ', '), '-') AS kursi,
-  COALESCE(SUM(t.harga), 0) AS total_harga
+  COALESCE(SUM(t.harga), 0) AS total_harga,
+  -- pembayaran terakhir (jika ada)
+  (SELECT pay.metode_bayar FROM pembayaran pay WHERE pay.id_pemesanan = p.id_pemesanan ORDER BY pay.id_pembayaran DESC LIMIT 1) AS metode_bayar,
+  (SELECT pay.status_bayar  FROM pembayaran pay WHERE pay.id_pemesanan = p.id_pemesanan ORDER BY pay.id_pembayaran DESC LIMIT 1) AS status_bayar,
+  (SELECT pay.total_bayar  FROM pembayaran pay WHERE pay.id_pemesanan = p.id_pemesanan ORDER BY pay.id_pembayaran DESC LIMIT 1) AS total_bayar
 FROM pemesanan p
 LEFT JOIN tiket t ON t.id_pemesanan = p.id_pemesanan
 LEFT JOIN jadwal_tayang j ON t.id_jadwal = j.id_jadwal
@@ -28,6 +32,7 @@ WHERE p.id_penonton = ?
 GROUP BY p.id_pemesanan
 ORDER BY p.tanggal_pesan DESC
 ";
+
 
 $stmt = $db->prepare($sql);
 $stmt->bind_param("i", $_SESSION['user']['id']);
@@ -94,6 +99,27 @@ $stmt->close();
         <?php endforeach; ?>
       </div>
     <?php endif; ?>
+
+    <div class="mt-3 flex items-center justify-between">
+  <div class="text-sm text-gray-500">
+    <?php if (!empty($it['status_bayar'])): ?>
+      Pembayaran: <span class="font-medium"><?= h($it['metode_bayar']) ?></span>
+      — <span class="<?= $it['status_bayar']==='SUKSES' ? 'text-green-600' : ($it['status_bayar']==='GAGAL' ? 'text-red-600' : 'text-yellow-600') ?>">
+        <?= h($it['status_bayar']) ?>
+      </span>
+    <?php else: ?>
+      <span class="text-red-600">Belum dibayar</span>
+    <?php endif; ?>
+  </div>
+  <div class="text-base font-semibold">
+    Total: Rp <?= number_format((int)($it['total_bayar'] ?? $it['total_harga']), 0, ',', '.') ?>
+  </div>
+</div>
+
+<?php if (empty($it['status_bayar']) || $it['status_bayar']!=='SUKSES'): ?>
+  <a href="pembayaran.php?id_pemesanan=<?= h($it['id_pemesanan']) ?>" class="inline-block mt-3 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm">Bayar Sekarang</a>
+<?php endif; ?>
+
 
     <a href="index.php" class="inline-block mt-6 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl">Kembali ke Beranda</a>
   </main>
