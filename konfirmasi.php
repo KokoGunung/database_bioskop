@@ -116,7 +116,8 @@ $total = $kuota * $hargaSatuan;
       <div class="flex justify-between text-lg font-semibold"><span>Total</span><span>Rp <?= number_format($total,0,',','.') ?></span></div>
     </div>
 
-    <p class="text-sm text-gray-500 mt-3">Tiket tersimpan. Kamu bisa mengecek riwayat pemesanan di halaman profil (fitur opsional).</p>
+    <p class="text-sm text-gray-500 mt-3">Tiket tersimpan.</p>
+    <a href="pesanan_saya.php" class="inline-block mt-4 mr-2 bg-white border text-gray-700 px-4 py-2 rounded-xl">Lihat Pesanan Saya</a>
 
     <a href="index.php" class="inline-block mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl">Selesai</a>
   </main>
