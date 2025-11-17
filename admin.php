@@ -2,12 +2,28 @@
 require "auth.php";
 require "service/database.php";
 require_admin();
-
 function h($x){ return htmlspecialchars((string)$x, ENT_QUOTES, 'UTF-8'); }
 
-$ok = ''; $err = '';
-$studios = $db->query("SELECT id_studio, nama_studio FROM studio ORDER BY nama_studio")->fetch_all(MYSQLI_ASSOC);
-$films   = $db->query("SELECT id_film, judul FROM film ORDER BY judul")->fetch_all(MYSQLI_ASSOC);
+// Tambah waktu HH:MM:SS (jam_mulai + durasi) -> HH:MM:SS
+function calc_end_time(string $start, string $durasi): string {
+  // normalisasi
+  if (!preg_match('/^\d{2}:\d{2}:\d{2}$/', $start))   $start  = ($start  === '' ? '00:00:00' : $start.':00');
+  if (!preg_match('/^\d{2}:\d{2}:\d{2}$/', $durasi)) $durasi = ($durasi === '' ? '00:00:00' : $durasi.':00');
+
+  list($sh,$sm,$ss) = array_map('intval', explode(':', $start));
+  list($dh,$dm,$ds) = array_map('intval', explode(':', $durasi));
+  $startSec = $sh*3600 + $sm*60 + $ss;
+  $durSec   = $dh*3600 + $dm*60 + $ds;
+
+  $endSec = ($startSec + $durSec) % 86400; // jika lewat tengah malam, wrap ke 0-23:59:59
+  $eh = floor($endSec/3600); $endSec %= 3600;
+  $em = floor($endSec/60);   $es = $endSec%60;
+
+  return sprintf('%02d:%02d:%02d', $eh, $em, $es);
+}
+
+$ok = "";
+$err = "";
 
 if ($_SERVER['REQUEST_METHOD']==='POST') {
 
@@ -63,32 +79,42 @@ if (isset($_POST['add_film'])) {
 
 
   if (isset($_POST['add_jadwal'])) {
-    $idj = trim($_POST['id_jadwal'] ?? '');
-    $idf = trim($_POST['id_film_ref'] ?? '');
-    $tg  = trim($_POST['tanggal'] ?? '');
-    $jm  = trim($_POST['jam_mulai'] ?? '');
-    $js  = trim($_POST['jam_selesai'] ?? '');
-    if ($idj===''||$idf===''||$tg===''||$jm===''||$js==='') { $err='Lengkapi semua field jadwal.'; }
-    else {
-      $st = $db->prepare("INSERT INTO jadwal_tayang (id_jadwal,id_film,tanggal,jam_mulai,jam_selesai) VALUES (?,?,?,?,?)");
-      $st->bind_param("sssss", $idj,$idf,$tg,$jm,$js);
-      $ok = $st->execute() ? 'Jadwal ditambahkan.' : 'Gagal menambah jadwal.';
-      $st->close();
-    }
-  }
+  $id_jadwal = trim($_POST['id_jadwal'] ?? '');
+  $id_film   = trim($_POST['id_film_ref'] ?? $_POST['id_film'] ?? '');
+  $tanggal   = trim($_POST['tanggal'] ?? '');
+  $jam_mulai = trim($_POST['jam_mulai'] ?? '');
 
-  if (isset($_POST['add_kursi'])) {
-    $idk = trim($_POST['id_kursi'] ?? '');
-    $ids = trim($_POST['id_studio_for_seat'] ?? '');
-    $no  = trim($_POST['nomor_kursi'] ?? '');
-    if ($idk===''||$ids===''||$no==='') { $err='Lengkapi id kursi, studio, nomor kursi.'; }
-    else {
-      $st = $db->prepare("INSERT INTO kursi (nomor_kursi, id_studio, posisi) VALUES (?,?,?)");
-      $st->bind_param("sss", $idk,$ids,$no);
-      $ok = $st->execute() ? 'Kursi ditambahkan.' : 'Gagal menambah kursi.';
+  if ($id_jadwal==='' || $id_film==='' || $tanggal==='' || $jam_mulai==='') {
+    $err = 'Lengkapi ID Jadwal, Film, Tanggal, dan Jam Mulai.';
+  } else {
+    // ambil durasi film
+    $q = $db->prepare("SELECT durasi FROM film WHERE id_film=? LIMIT 1");
+    $q->bind_param("s", $id_film);
+    $q->execute();
+    $row = $q->get_result()->fetch_assoc();
+    $q->close();
+
+    if (!$row || empty($row['durasi'])) {
+      $err = 'Durasi film tidak ditemukan.';
+    } else {
+      $jam_selesai = calc_end_time($jam_mulai, $row['durasi']);
+
+      $st = $db->prepare("
+        INSERT INTO jadwal_tayang (id_jadwal, id_film, tanggal, jam_mulai, jam_selesai)
+        VALUES (?,?,?,?,?)
+      ");
+      $st->bind_param("sssss", $id_jadwal, $id_film, $tanggal, $jam_mulai, $jam_selesai);
+
+      if ($st->execute()) {
+        $ok = 'Jadwal berhasil ditambahkan.';
+      } else {
+        $err = 'Gagal menambah jadwal.';
+      }
       $st->close();
     }
   }
+}
+
 
   // refresh dropdown
   $studios = $db->query("SELECT id_studio, nama_studio FROM studio ORDER BY nama_studio")->fetch_all(MYSQLI_ASSOC);
@@ -165,24 +191,80 @@ if (isset($_POST['add_film'])) {
       <section class="rounded-2xl border bg-white p-6">
         <h2 class="font-semibold text-lg mb-4">Tambah Jadwal Tayang</h2>
         <form method="post" class="space-y-3">
-          <input type="hidden" name="add_jadwal" value="1">
-          <div><label class="text-sm">ID Jadwal</label><input name="id_jadwal" class="w-full border rounded-xl px-3 py-2" placeholder="J101" required></div>
+          <input type="hidden" name="add_jadwal" value="1" />
+
           <div>
-            <label class="text-sm">Film</label>
-            <select name="id_film_ref" class="w-full border rounded-xl px-3 py-2" required>
-              <option value="">-- pilih film --</option>
-              <?php foreach($films as $f): ?>
-                <option value="<?= h($f['id_film']) ?>"><?= h($f['id_film'].' — '.$f['judul']) ?></option>
-              <?php endforeach; ?>
+            <label class="block text-sm font-medium">ID Jadwal</label>
+            <input name="id_jadwal" class="w-full border rounded px-3 py-2" required>
+          </div>
+
+          <!-- PILIH FILM -->
+          <div>
+            <label class="block text-sm font-medium">Film</label>
+            <select name="id_film" id="filmSelect" class="w-full border rounded px-3 py-2" required>
+              <?php
+              $fs = $db->query("SELECT id_film, judul, durasi FROM film ORDER BY judul");
+              while($f = $fs->fetch_assoc()):
+              ?>
+                <option value="<?= h($f['id_film']) ?>" data-dur="<?= h($f['durasi']) ?>">
+                  <?= h($f['judul']) ?> (<?= h(substr($f['durasi'],0,5)) ?>)
+                </option>
+              <?php endwhile; ?>
             </select>
           </div>
-          <div class="grid grid-cols-3 gap-3">
-            <div><label class="text-sm">Tanggal</label><input name="tanggal" type="date" class="w-full border rounded-xl px-3 py-2" required></div>
-            <div><label class="text-sm">Jam Mulai</label><input name="jam_mulai" type="time" class="w-full border rounded-xl px-3 py-2" required></div>
-            <div><label class="text-sm">Jam Selesai</label><input name="jam_selesai" type="time" class="w-full border rounded-xl px-3 py-2" required></div>
+
+          <!-- TAMPILKAN ID FILM YANG TERPILIH -->
+          <div>
+            <label class="block text-sm font-medium">ID Film (terpilih)</label>
+            <input type="text" id="idFilmShown" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
           </div>
-          <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl">Simpan</button>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium">Tanggal</label>
+              <input type="date" name="tanggal" class="w-full border rounded px-3 py-2" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium">Jam Mulai</label>
+              <input type="time" name="jam_mulai" id="jamMulai" step="60" class="w-full border rounded px-3 py-2" required>
+            </div>
+          </div>
+
+          <!-- Preview jam selesai (otomatis) -->
+          <div>
+            <label class="block text-sm font-medium">Jam Selesai (otomatis)</label>
+            <input type="text" id="jamSelesaiPreview" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
+          </div>
+
+          <button class="bg-indigo-600 text-white px-4 py-2 rounded">Simpan Jadwal</button>
         </form>
+
+        <script>
+        // Sinkronkan ID Film & preview jam selesai
+        const filmSel  = document.getElementById('filmSelect');
+        const idShown  = document.getElementById('idFilmShown');
+        const jamMulai = document.getElementById('jamMulai');
+        const out      = document.getElementById('jamSelesaiPreview');
+
+        function toSec(hms){ const [h=0,m=0,s=0]=hms.split(':').map(Number); return h*3600+m*60+(s||0); }
+        function toHMS(sec){ sec=((sec%86400)+86400)%86400; const h=String(Math.floor(sec/3600)).padStart(2,'0'); sec%=3600; const m=String(Math.floor(sec/60)).padStart(2,'0'); const s=String(sec%60).padStart(2,'0'); return `${h}:${m}:${s}`; }
+
+        function syncId(){ idShown.value = filmSel.value || ''; }
+        function recalc(){
+          const dur = (filmSel.selectedOptions[0]?.dataset?.dur || '00:00:00');
+          let jm = jamMulai.value || '00:00';
+          if (jm.length===5) jm += ':00';
+          out.value = toHMS(toSec(jm) + toSec(dur));
+        }
+
+        filmSel.addEventListener('change', ()=>{ syncId(); recalc(); });
+        jamMulai.addEventListener('input', recalc);
+
+        // init saat halaman dibuka
+        syncId(); recalc();
+        </script>
+
+
       </section>
 
       <section class="rounded-2xl border bg-white p-6">
