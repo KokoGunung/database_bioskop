@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 16, 2025 at 04:40 PM
+-- Generation Time: Nov 17, 2025 at 02:43 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -71,7 +71,20 @@ CREATE TABLE `jadwal_tayang` (
 --
 
 INSERT INTO `jadwal_tayang` (`id_jadwal`, `id_film`, `jam_mulai`, `jam_selesai`, `tanggal`) VALUES
-('JFT1001', 'FT001', '18:30:00', '20:00:00', '2025-11-16');
+('FD1001', 'FD001', '15:34:00', '17:28:00', '2025-11-17'),
+('JFD1002', 'FD001', '11:36:00', '13:30:00', '2025-11-19'),
+('JFD1003', 'FD001', '20:09:00', '22:03:00', '2025-11-20'),
+('JFF001', 'FF001', '10:40:00', '12:03:00', '2025-11-17'),
+('JFF1002', 'FF001', '17:00:00', '18:53:00', '2025-11-17'),
+('JFF1003', 'FF001', '12:35:00', '14:52:00', '2025-11-18'),
+('JFH1001', 'FH001', '10:20:00', '12:00:00', '2025-11-18'),
+('JFH1002', 'FH001', '10:33:00', '12:21:00', '2025-11-17'),
+('JFH1003', 'FH001', '17:50:00', '19:38:00', '2025-11-18'),
+('JFH1004', 'FH001', '10:04:00', '11:52:00', '2025-11-19'),
+('JFT1001', 'FT001', '18:30:00', '20:00:00', '2025-11-16'),
+('JFT1003', 'FT001', '12:43:00', '14:35:00', '2025-11-19'),
+('JFT1004', 'FT001', '11:40:00', '13:32:00', '2025-11-17'),
+('JFT1005', 'FT001', '14:44:00', '16:36:00', '2025-11-21');
 
 -- --------------------------------------------------------
 
@@ -157,7 +170,98 @@ INSERT INTO `kursi` (`nomor_kursi`, `id_studio`, `posisi`, `status`) VALUES
 ('K064', 'ST01', 'H1', 'TERSEDIA'),
 ('K065', 'ST01', 'H2', 'TERSEDIA'),
 ('K066', 'ST01', 'H3', 'TERSEDIA'),
-('K067', 'ST01', 'H4', 'TERSEDIA');
+('K067', 'ST01', 'H4', 'TERSEDIA'),
+('K101', 'ST02', 'A1', 'TERSEDIA'),
+('K102', 'ST02', 'A2', 'TERSEDIA'),
+('K103', 'ST02', 'A3', 'TERSEDIA'),
+('K104', 'ST02', 'A4', 'TERSEDIA'),
+('K105', 'ST02', 'A5', 'TERSEDIA'),
+('K106', 'ST02', 'A6', 'TERSEDIA'),
+('K107', 'ST02', 'A7', 'TERSEDIA'),
+('K108', 'ST02', 'A8', 'TERSEDIA'),
+('K109', 'ST02', 'A9', 'TERSEDIA'),
+('K110', 'ST02', 'B1', 'TERSEDIA'),
+('K111', 'ST02', 'B2', 'TERSEDIA'),
+('K112', 'ST02', 'B3', 'TERSEDIA'),
+('K113', 'ST02', 'B4', 'TERSEDIA'),
+('K114', 'ST02', 'B5', 'TERSEDIA'),
+('K115', 'ST02', 'B6', 'TERSEDIA'),
+('K116', 'ST02', 'B7', 'TERSEDIA'),
+('K117', 'ST02', 'B8', 'TERSEDIA'),
+('K118', 'ST02', 'B9', 'TERSEDIA'),
+('K119', 'ST02', 'C1', 'TERSEDIA'),
+('K120', 'ST02', 'C2', 'TERSEDIA'),
+('K121', 'ST02', 'C3', 'TERSEDIA'),
+('K122', 'ST02', 'C4', 'TERSEDIA'),
+('K123', 'ST02', 'C5', 'TERSEDIA'),
+('K124', 'ST02', 'C6', 'TERSEDIA'),
+('K125', 'ST02', 'C7', 'TERSEDIA'),
+('K126', 'ST02', 'C8', 'TERSEDIA'),
+('K127', 'ST02', 'C9', 'TERSEDIA'),
+('K128', 'ST02', 'D1', 'TERSEDIA'),
+('K129', 'ST02', 'D2', 'TERSEDIA'),
+('K130', 'ST02', 'D3', 'TERSEDIA'),
+('K131', 'ST02', 'D4', 'TERSEDIA'),
+('K132', 'ST02', 'D5', 'TERSEDIA'),
+('K133', 'ST02', 'D6', 'TERSEDIA'),
+('K134', 'ST02', 'D7', 'TERSEDIA'),
+('K135', 'ST02', 'D8', 'TERSEDIA'),
+('K136', 'ST02', 'D9', 'TERSEDIA'),
+('K137', 'ST02', 'E1', 'TERSEDIA'),
+('K138', 'ST02', 'E2', 'TERSEDIA'),
+('K139', 'ST02', 'E3', 'TERSEDIA'),
+('K140', 'ST02', 'E4', 'TERSEDIA'),
+('K141', 'ST02', 'E5', 'TERSEDIA'),
+('K142', 'ST02', 'E6', 'TERSEDIA'),
+('K143', 'ST02', 'E7', 'TERSEDIA'),
+('K144', 'ST02', 'E8', 'TERSEDIA'),
+('K145', 'ST02', 'E9', 'TERSEDIA'),
+('K146', 'ST02', 'F1', 'TERSEDIA'),
+('K147', 'ST02', 'F2', 'TERSEDIA'),
+('K148', 'ST02', 'F3', 'TERSEDIA'),
+('K149', 'ST02', 'F4', 'TERSEDIA'),
+('K150', 'ST02', 'F5', 'TERSEDIA'),
+('K201', 'ST03', 'A1', 'TERSEDIA'),
+('K202', 'ST03', 'A2', 'TERSEDIA'),
+('K203', 'ST03', 'A3', 'TERSEDIA'),
+('K204', 'ST03', 'A4', 'TERSEDIA'),
+('K205', 'ST03', 'A5', 'TERSEDIA'),
+('K206', 'ST03', 'A6', 'TERSEDIA'),
+('K207', 'ST03', 'A7', 'TERSEDIA'),
+('K208', 'ST03', 'A8', 'TERSEDIA'),
+('K209', 'ST03', 'A9', 'TERSEDIA'),
+('K210', 'ST03', 'B1', 'TERSEDIA'),
+('K211', 'ST03', 'B2', 'TERSEDIA'),
+('K212', 'ST03', 'B3', 'TERSEDIA'),
+('K213', 'ST03', 'B4', 'TERSEDIA'),
+('K214', 'ST03', 'B5', 'TERSEDIA'),
+('K215', 'ST03', 'B6', 'TERSEDIA'),
+('K216', 'ST03', 'B7', 'TERSEDIA'),
+('K217', 'ST03', 'B8', 'TERSEDIA'),
+('K218', 'ST03', 'B9', 'TERSEDIA'),
+('K219', 'ST03', 'C1', 'TERSEDIA'),
+('K220', 'ST03', 'C2', 'TERSEDIA'),
+('K221', 'ST03', 'C3', 'TERSEDIA'),
+('K222', 'ST03', 'C4', 'TERSEDIA'),
+('K223', 'ST03', 'C5', 'TERSEDIA'),
+('K224', 'ST03', 'C6', 'TERSEDIA'),
+('K225', 'ST03', 'C7', 'TERSEDIA'),
+('K226', 'ST03', 'C8', 'TERSEDIA'),
+('K227', 'ST03', 'C9', 'TERSEDIA'),
+('K228', 'ST03', 'D1', 'TERSEDIA'),
+('K229', 'ST03', 'D2', 'TERSEDIA'),
+('K230', 'ST03', 'D3', 'TERSEDIA'),
+('K231', 'ST03', 'D4', 'TERSEDIA'),
+('K232', 'ST03', 'D5', 'TERSEDIA'),
+('K233', 'ST03', 'D6', 'TERSEDIA'),
+('K234', 'ST03', 'D7', 'TERSEDIA'),
+('K235', 'ST03', 'D8', 'TERSEDIA'),
+('K236', 'ST03', 'D9', 'TERSEDIA'),
+('K237', 'ST03', 'E1', 'TERSEDIA'),
+('K238', 'ST03', 'E2', 'TERSEDIA'),
+('K239', 'ST03', 'E3', 'TERSEDIA'),
+('K240', 'ST03', 'E4', 'TERSEDIA'),
+('K241', 'ST03', 'E5', 'TERSEDIA');
 
 -- --------------------------------------------------------
 
@@ -178,7 +282,9 @@ CREATE TABLE `pembayaran` (
 --
 
 INSERT INTO `pembayaran` (`id_pembayaran`, `id_pemesanan`, `metode_bayar`, `total_bayar`, `status_bayar`) VALUES
+('PB629823', 'PM10669759', 'Gopay', 80000, 'SUKSES'),
 ('PB636647', 'PM96449123', 'QRIS', 200000, 'SUKSES'),
+('PB816622', 'PM09793105', 'OVO', 80000, 'SUKSES'),
 ('PB820561', 'PM04911680', 'Bank Transfer', 50000, 'SUKSES'),
 ('PB956823', 'PM06910258', 'Shopee-Pay', 100000, 'SUKSES');
 
@@ -202,6 +308,9 @@ CREATE TABLE `pemesanan` (
 INSERT INTO `pemesanan` (`id_pemesanan`, `id_penonton`, `tanggal_pesan`, `jumlah_tiket`) VALUES
 ('PM04911680', 1, '2025-11-16 21:55:11', 1),
 ('PM06910258', 1, '2025-11-16 22:28:30', 2),
+('PM08387199', 1, '2025-11-16 22:53:07', 2),
+('PM09793105', 1, '2025-11-16 23:16:33', 2),
+('PM10669759', 3, '2025-11-16 23:31:09', 2),
 ('PM96449123', 1, '2025-11-16 19:34:09', 4);
 
 -- --------------------------------------------------------
@@ -225,7 +334,7 @@ CREATE TABLE `penonton` (
 
 INSERT INTO `penonton` (`id_penonton`, `tanggal_daftar`, `email`, `password`, `nama`, `nomor_hp`) VALUES
 (1, '2025-11-13 21:08:03', 'jujuso@gmail.com', 'juso123', 'Jujuso', '083256153422'),
-(3, '2025-11-13 21:18:19', 'bramsaputra@gmail.com', 'bram123', 'Bram Saputra', '083542981453'),
+(3, '2025-11-13 21:18:19', 'bramsaputra@gmail.com', 'bram123', 'Bram Saputra', '083542981459'),
 (4, '2025-11-13 22:41:47', 'narendra23@gmail.com', 'narendra321', 'Narendra Widyatama', '086357281652');
 
 -- --------------------------------------------------------
@@ -247,7 +356,7 @@ CREATE TABLE `studio` (
 INSERT INTO `studio` (`id_studio`, `nama_studio`, `kapasitas`) VALUES
 ('ST01', 'Studio 1', 62),
 ('ST02', 'Studio 2', 50),
-('ST03', 'Studio 3', 31);
+('ST03', 'Studio 3', 41);
 
 -- --------------------------------------------------------
 
@@ -269,12 +378,16 @@ CREATE TABLE `tiket` (
 
 INSERT INTO `tiket` (`id_tiket`, `nomor_kursi`, `id_pemesanan`, `id_jadwal`, `harga`) VALUES
 ('TK15B0AA75', 'K001', 'PM06910258', 'JFT1001', 50000),
+('TK1A558F3B', 'K120', 'PM10669759', 'JFF001', 40000),
+('TK4AF82C82', 'K132', 'PM09793105', 'JFF1002', 40000),
+('TK60907B02', 'K131', 'PM09793105', 'JFF1002', 40000),
 ('TK6919e5d3', 'K009', 'PM04911680', 'JFT1001', 50000),
 ('TK96470198', 'K004', 'PM96449123', 'JFT1001', 50000),
 ('TK96470749', 'K005', 'PM96449123', 'JFT1001', 50000),
 ('TK96470767', 'K007', 'PM96449123', 'JFT1001', 50000),
 ('TK96470921', 'K006', 'PM96449123', 'JFT1001', 50000),
-('TK9D16D395', 'K002', 'PM06910258', 'JFT1001', 50000);
+('TK9D16D395', 'K002', 'PM06910258', 'JFT1001', 50000),
+('TKB591CE98', 'K119', 'PM10669759', 'JFF001', 40000);
 
 --
 -- Indexes for dumped tables
